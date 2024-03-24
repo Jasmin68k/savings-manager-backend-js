@@ -7,7 +7,6 @@ const moneyboxSchema = new mongoose.Schema(
     name: {
       type: String,
       required: [true, 'Moneybox name is required'],
-      unique: true,
       minlength: [1, 'Moneybox name must have at least 1 character'],
       comment: 'The name of a moneybox.'
     },
@@ -28,6 +27,9 @@ const moneyboxSchema = new mongoose.Schema(
     timestamps: { createdAt: 'created_at', updatedAt: 'modified_at' }
   }
 )
+
+// As in original Python backend, allow using existing name, when is_active is false
+moneyboxSchema.index({ name: 1, is_active: 1 }, { unique: true })
 
 // To be compatible with original Python backend we use sequential integer ids instead of default MongoDB ObjectIds (_id).
 moneyboxSchema.plugin(AutoIncrement, {
