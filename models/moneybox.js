@@ -16,6 +16,12 @@ const moneyboxSchema = new mongoose.Schema(
       min: [0, 'Balance cannot be negative'],
       comment: 'The current balance of the moneybox.'
     },
+    priority: {
+      type: Number,
+      required: [true, 'Priority is required'],
+      min: [1, 'Priority cannot be negative'],
+      comment: 'The current priority of the moneybox.'
+    },
     is_active: {
       type: Boolean,
       required: true,

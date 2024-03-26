@@ -110,6 +110,7 @@ app.get('/api/moneybox/:moneybox_id', [
         id: moneybox.id,
         name: moneybox.name,
         balance: moneybox.balance,
+        priority: moneybox.priority,
         created_at: moneybox.created_at.toISOString(),
         modified_at: moneybox.modified_at.toISOString()
       })
@@ -122,13 +123,18 @@ app.get('/api/moneybox/:moneybox_id', [
 app.patch('/api/moneybox/:moneybox_id', [
   param('moneybox_id').isInt({ min: 1 }),
   body('name')
+    .optional()
     .trim()
     .escape()
     .not()
     .isEmpty()
     .withMessage('Name must not be empty'),
+  body('priority')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Priority must be a positive integer'),
   validateMoneyboxId,
-  rejectExtraFields(['name']),
+  rejectExtraFields(['name', 'priority']),
   async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -136,12 +142,14 @@ app.patch('/api/moneybox/:moneybox_id', [
     }
 
     const { moneybox_id } = req.params
-    const { name } = req.body
+    const updateData = {}
+    if (req.body.name !== undefined) updateData.name = req.body.name
+    if (req.body.priority !== undefined) updateData.priority = req.body.priority
 
     try {
       const updatedMoneybox = await Moneybox.findOneAndUpdate(
         { id: moneybox_id, is_active: true },
-        { name },
+        updateData,
         { new: true }
       )
       if (!updatedMoneybox) {
@@ -155,6 +163,7 @@ app.patch('/api/moneybox/:moneybox_id', [
         id: updatedMoneybox.id,
         name: updatedMoneybox.name,
         balance: updatedMoneybox.balance,
+        priority: updatedMoneybox.priority,
         created_at: updatedMoneybox.created_at.toISOString(),
         modified_at: updatedMoneybox.modified_at.toISOString()
       })
@@ -206,10 +215,19 @@ app.post('/api/moneybox', [
 
     const { name } = req.body
 
+    // Find the highest priority moneybox that is active and set priority for new moneybox to +1
+    const highestPriorityMoneybox = await Moneybox.findOne({ is_active: true })
+      .sort({ priority: -1 })
+      .limit(1)
+    const newPriority = highestPriorityMoneybox
+      ? highestPriorityMoneybox.priority + 1
+      : 1
+
     const moneybox = new Moneybox({
       name,
       balance: 0,
-      is_active: true
+      is_active: true,
+      priority: newPriority
     })
 
     try {
@@ -219,6 +237,7 @@ app.post('/api/moneybox', [
         id: moneybox.id,
         name: moneybox.name,
         balance: moneybox.balance,
+        priority: moneybox.priority,
         created_at: moneybox.created_at.toISOString(),
         modified_at: moneybox.modified_at.toISOString()
       })
@@ -546,6 +565,7 @@ app.get('/api/moneyboxes', async (req, res) => {
       id: moneybox.id,
       name: moneybox.name,
       balance: moneybox.balance,
+      priority: moneybox.priority,
       created_at: moneybox.created_at.toISOString(),
       modified_at: moneybox.modified_at.toISOString()
     }))
