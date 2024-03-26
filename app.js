@@ -180,15 +180,35 @@ app.delete('/api/moneybox/:moneybox_id', [
     const { moneybox_id } = req.params
 
     try {
+      // Get existing name
+      const moneybox = await Moneybox.findOne({
+        id: moneybox_id,
+        is_active: true
+      })
+      if (!moneybox) {
+        return res.status(404).json({
+          message: `Moneybox with id ${moneybox_id} does not exist.`,
+          details: { id: moneybox_id }
+        })
+      }
+
+      // Create a unique identifier to append to the name
+      const uniqueIdentifier = Date.now() // Using current timestamp as a unique identifier
+      const newName = `${moneybox.name}_${uniqueIdentifier}`
+
+      // Update the moneybox with the new name and set it as inactive
       const result = await Moneybox.findOneAndUpdate(
         { id: moneybox_id, is_active: true },
-        { is_active: false },
+        {
+          is_active: false,
+          name: newName
+        },
         { new: true }
       )
 
       if (!result) {
         return res.status(404).json({
-          message: `Moneybox with id ${moneybox_id} does not exist.`,
+          message: `Error updating Moneybox with id ${moneybox_id}.`,
           details: { id: moneybox_id }
         })
       }
