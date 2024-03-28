@@ -1,8 +1,16 @@
 # Savings Manager Backend
 
-NodeJS/Express implementation (work in progress) of https://github.com/PythBuster/savings_manager
+NodeJS/Express implementation (work in progress) of this backend:
 
-Original also forked here: https://github.com/Jasmin68k/savings-manager-backend
+https://github.com/PythBuster/savings_manager
+
+Backend also forked here:
+
+https://github.com/Jasmin68k/savings-manager-backend
+
+Check it out here (auto-deployed `feature/temp-express-only` branch):
+
+https://savings-manager-frontend.netlify.app/ (using this frontend: https://github.com/Jasmin68k/savings-manager-frontend)
 
 ## Configuration
 
