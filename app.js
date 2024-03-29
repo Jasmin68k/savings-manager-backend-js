@@ -3,7 +3,7 @@ const express = require('express')
 const cors = require('cors')
 const bodyParser = require('body-parser')
 const Moneybox = require('./models/moneybox.js')
-const Transaction = require('./models/transactions')
+const Transaction = require('./models/transaction.js')
 const { body, param, validationResult } = require('express-validator')
 
 const app = express()
