@@ -27,6 +27,12 @@ const moneyboxSchema = new mongoose.Schema(
       required: true,
       default: true,
       comment: 'Flag to mark instance as deleted.'
+    },
+    is_overflow: {
+      type: Boolean,
+      required: true,
+      default: false,
+      comment: 'Flag to mark instance as overflow.'
     }
   },
   {
@@ -36,6 +42,12 @@ const moneyboxSchema = new mongoose.Schema(
 
 // As in original Python backend, allow using existing name, when is_active is false
 moneyboxSchema.index({ name: 1, is_active: 1 }, { unique: true })
+
+// Allow only one overflow
+moneyboxSchema.index(
+  { is_overflow: 1 },
+  { unique: true, partialFilterExpression: { is_overflow: true } }
+)
 
 // To be compatible with original Python backend we use sequential integer ids instead of default MongoDB ObjectIds (_id).
 moneyboxSchema.plugin(AutoIncrement, {
