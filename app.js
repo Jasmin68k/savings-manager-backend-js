@@ -323,6 +323,7 @@ app.post('/api/moneybox/:moneybox_id/balance/add', [
       res.status(200).json({
         id: moneybox.id,
         name: moneybox.name,
+        priority: moneybox.priority,
         balance: moneybox.balance,
         created_at: moneybox.created_at.toISOString(),
         modified_at: moneybox.modified_at.toISOString()
@@ -401,7 +402,8 @@ app.post('/api/moneybox/:moneybox_id/balance/sub', [
         created_at: moneybox.created_at.toISOString(),
         modified_at: moneybox.modified_at.toISOString(),
         id: moneybox.id,
-        name: moneybox.name
+        name: moneybox.name,
+        priority: moneybox.priority
       })
     } catch (error) {
       handleError(error, res)
