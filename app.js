@@ -112,7 +112,8 @@ app.get('/api/moneybox/:moneybox_id', [
         balance: moneybox.balance,
         priority: moneybox.priority,
         created_at: moneybox.created_at.toISOString(),
-        modified_at: moneybox.modified_at.toISOString()
+        modified_at: moneybox.modified_at.toISOString(),
+        is_overflow: moneybox.is_overflow
       })
     } catch (error) {
       handleError(error, res)
@@ -165,7 +166,8 @@ app.patch('/api/moneybox/:moneybox_id', [
         balance: updatedMoneybox.balance,
         priority: updatedMoneybox.priority,
         created_at: updatedMoneybox.created_at.toISOString(),
-        modified_at: updatedMoneybox.modified_at.toISOString()
+        modified_at: updatedMoneybox.modified_at.toISOString(),
+        is_overflow: updatedMoneybox.is_overflow
       })
     } catch (error) {
       handleError(error, res)
@@ -189,6 +191,12 @@ app.delete('/api/moneybox/:moneybox_id', [
         return res.status(404).json({
           message: `Moneybox with id ${moneybox_id} does not exist.`,
           details: { id: moneybox_id }
+        })
+      }
+
+      if (moneybox.is_overflow) {
+        return res.status(403).json({
+          message: 'Deleting an overflow moneybox is not allowed.'
         })
       }
 
@@ -226,17 +234,33 @@ app.post('/api/moneybox', [
     .not()
     .isEmpty()
     .withMessage('Name must not be empty'),
-  rejectExtraFields(['name']),
+  body('is_overflow') // Validate is_overflow as a boolean and optional.
+    .optional()
+    .isBoolean()
+    .withMessage('is_overflow must be a boolean'),
+  rejectExtraFields(['name', 'is_overflow']),
   async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       return res.status(422).json({ errors: errors.array() })
     }
 
-    const { name } = req.body
+    const { name, is_overflow } = req.body
+
+    if (is_overflow) {
+      const existingOverflow = await Moneybox.findOne({ is_overflow: true })
+      if (existingOverflow) {
+        return res.status(409).json({
+          message: 'An overflow moneybox already exists.'
+        })
+      }
+    }
 
     // Find the highest priority moneybox that is active and set priority for new moneybox to +1
-    const highestPriorityMoneybox = await Moneybox.findOne({ is_active: true })
+    const highestPriorityMoneybox = await Moneybox.findOne({
+      is_active: true,
+      is_overflow: { $ne: true }
+    })
       .sort({ priority: -1 })
       .limit(1)
     const newPriority = highestPriorityMoneybox
@@ -247,7 +271,8 @@ app.post('/api/moneybox', [
       name,
       balance: 0,
       is_active: true,
-      priority: newPriority
+      priority: newPriority,
+      is_overflow: is_overflow || false
     })
 
     try {
@@ -259,7 +284,8 @@ app.post('/api/moneybox', [
         balance: moneybox.balance,
         priority: moneybox.priority,
         created_at: moneybox.created_at.toISOString(),
-        modified_at: moneybox.modified_at.toISOString()
+        modified_at: moneybox.modified_at.toISOString(),
+        is_overflow: moneybox.is_overflow
       })
     } catch (error) {
       handleError(error, res)
@@ -326,7 +352,8 @@ app.post('/api/moneybox/:moneybox_id/balance/add', [
         priority: moneybox.priority,
         balance: moneybox.balance,
         created_at: moneybox.created_at.toISOString(),
-        modified_at: moneybox.modified_at.toISOString()
+        modified_at: moneybox.modified_at.toISOString(),
+        is_overflow: moneybox.is_overflow
       })
     } catch (error) {
       handleError(error, res)
@@ -403,7 +430,8 @@ app.post('/api/moneybox/:moneybox_id/balance/sub', [
         modified_at: moneybox.modified_at.toISOString(),
         id: moneybox.id,
         name: moneybox.name,
-        priority: moneybox.priority
+        priority: moneybox.priority,
+        is_overflow: moneybox.is_overflow
       })
     } catch (error) {
       handleError(error, res)
@@ -589,7 +617,8 @@ app.get('/api/moneyboxes', async (req, res) => {
       balance: moneybox.balance,
       priority: moneybox.priority,
       created_at: moneybox.created_at.toISOString(),
-      modified_at: moneybox.modified_at.toISOString()
+      modified_at: moneybox.modified_at.toISOString(),
+      is_overflow: moneybox.is_overflow
     }))
 
     res.status(200).json({
