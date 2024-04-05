@@ -33,6 +33,24 @@ const moneyboxSchema = new mongoose.Schema(
       required: true,
       default: false,
       comment: 'Flag to mark instance as overflow.'
+    },
+    goal: {
+      type: Number,
+      required: [true, 'Goal is required'],
+      min: [0, 'Goal cannot be negative'],
+      comment: 'The current savings goal of the moneybox.'
+    },
+    increment: {
+      type: Number,
+      required: [true, 'Increment is required'],
+      min: [0, 'Increment cannot be negative'],
+      comment: 'The current savings increment of the moneybox.'
+    },
+    no_limit: {
+      type: Boolean,
+      required: true,
+      default: false,
+      comment: 'Flag to mark moneybox as having no (limit on) savings goal.'
     }
   },
   {

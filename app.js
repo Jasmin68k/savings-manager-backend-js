@@ -113,7 +113,10 @@ app.get('/api/moneybox/:moneybox_id', [
         priority: moneybox.priority,
         created_at: moneybox.created_at.toISOString(),
         modified_at: moneybox.modified_at.toISOString(),
-        is_overflow: moneybox.is_overflow
+        is_overflow: moneybox.is_overflow,
+        goal: moneybox.goal,
+        increment: moneybox.increment,
+        no_limit: moneybox.no_limit
       })
     } catch (error) {
       handleError(error, res)
@@ -134,8 +137,20 @@ app.patch('/api/moneybox/:moneybox_id', [
     .optional()
     .isInt({ min: 1 })
     .withMessage('Priority must be a positive integer'),
+  body('goal')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Goal must be a positive integer'),
+  body('increment')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Increment must be a positive integer'),
+  body('no_limit')
+    .optional()
+    .isBoolean()
+    .withMessage('no_limit must be a boolean'),
   validateMoneyboxId,
-  rejectExtraFields(['name', 'priority']),
+  rejectExtraFields(['name', 'priority', 'goal', 'increment', 'no_limit']),
   async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -146,6 +161,10 @@ app.patch('/api/moneybox/:moneybox_id', [
     const updateData = {}
     if (req.body.name !== undefined) updateData.name = req.body.name
     if (req.body.priority !== undefined) updateData.priority = req.body.priority
+    if (req.body.goal !== undefined) updateData.goal = req.body.goal
+    if (req.body.increment !== undefined)
+      updateData.increment = req.body.increment
+    if (req.body.no_limit !== undefined) updateData.no_limit = req.body.no_limit
 
     try {
       const updatedMoneybox = await Moneybox.findOneAndUpdate(
@@ -167,7 +186,10 @@ app.patch('/api/moneybox/:moneybox_id', [
         priority: updatedMoneybox.priority,
         created_at: updatedMoneybox.created_at.toISOString(),
         modified_at: updatedMoneybox.modified_at.toISOString(),
-        is_overflow: updatedMoneybox.is_overflow
+        is_overflow: updatedMoneybox.is_overflow,
+        goal: updatedMoneybox.goal,
+        increment: updatedMoneybox.increment,
+        no_limit: updatedMoneybox.no_limit
       })
     } catch (error) {
       handleError(error, res)
@@ -242,18 +264,23 @@ app.post('/api/moneybox', [
     .not()
     .isEmpty()
     .withMessage('Name must not be empty'),
-  body('is_overflow') // Validate is_overflow as a boolean and optional.
+  body('is_overflow')
     .optional()
     .isBoolean()
     .withMessage('is_overflow must be a boolean'),
-  rejectExtraFields(['name', 'is_overflow']),
+  body('goal').isInt({ min: 0 }).withMessage('Goal must be a positive integer'),
+  body('increment')
+    .isInt({ min: 0 })
+    .withMessage('Increment must be a positive integer'),
+  body('no_limit').isBoolean().withMessage('no_limit must be a boolean'),
+  rejectExtraFields(['name', 'is_overflow', 'goal', 'increment', 'no_limit']),
   async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       return res.status(422).json({ errors: errors.array() })
     }
 
-    const { name, is_overflow } = req.body
+    const { name, is_overflow, goal, increment, no_limit } = req.body
 
     if (is_overflow) {
       const existingOverflow = await Moneybox.findOne({ is_overflow: true })
@@ -280,7 +307,10 @@ app.post('/api/moneybox', [
       balance: 0,
       is_active: true,
       priority: newPriority,
-      is_overflow: is_overflow || false
+      is_overflow: is_overflow || false,
+      goal: goal,
+      increment: increment,
+      no_limit: no_limit
     })
 
     try {
@@ -293,7 +323,10 @@ app.post('/api/moneybox', [
         priority: moneybox.priority,
         created_at: moneybox.created_at.toISOString(),
         modified_at: moneybox.modified_at.toISOString(),
-        is_overflow: moneybox.is_overflow
+        is_overflow: moneybox.is_overflow,
+        goal: moneybox.goal,
+        increment: moneybox.increment,
+        no_limit: moneybox.no_limit
       })
     } catch (error) {
       handleError(error, res)
@@ -349,7 +382,10 @@ app.post('/api/moneybox/:moneybox_id/balance/add', [
         balance: moneybox.balance,
         created_at: moneybox.created_at.toISOString(),
         modified_at: moneybox.modified_at.toISOString(),
-        is_overflow: moneybox.is_overflow
+        is_overflow: moneybox.is_overflow,
+        goal: moneybox.goal,
+        increment: moneybox.increment,
+        no_limit: moneybox.no_limit
       })
     } catch (error) {
       handleError(error, res)
@@ -415,7 +451,10 @@ app.post('/api/moneybox/:moneybox_id/balance/sub', [
         created_at: moneybox.created_at.toISOString(),
         modified_at: moneybox.modified_at.toISOString(),
         priority: moneybox.priority,
-        is_overflow: moneybox.is_overflow
+        is_overflow: moneybox.is_overflow,
+        goal: moneybox.goal,
+        increment: moneybox.increment,
+        no_limit: moneybox.no_limit
       })
     } catch (error) {
       handleError(error, res)
@@ -601,7 +640,10 @@ app.get('/api/moneyboxes', async (req, res) => {
       priority: moneybox.priority,
       created_at: moneybox.created_at.toISOString(),
       modified_at: moneybox.modified_at.toISOString(),
-      is_overflow: moneybox.is_overflow
+      is_overflow: moneybox.is_overflow,
+      goal: moneybox.goal,
+      increment: moneybox.increment,
+      no_limit: moneybox.no_limit
     }))
 
     res.status(200).json({
