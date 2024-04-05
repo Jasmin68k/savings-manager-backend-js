@@ -200,6 +200,14 @@ app.delete('/api/moneybox/:moneybox_id', [
         })
       }
 
+      const balance = moneybox.balance
+      if (balance > 0) {
+        return res.status(405).json({
+          message: `Deleting moneyboxes with balance>0 is not allowed. Moneybox '${moneybox_id}' has balance ${balance}.`,
+          details: { id: moneybox_id }
+        })
+      }
+
       // Create a unique identifier to append to the name
       const uniqueIdentifier = Date.now() // Using current timestamp as a unique identifier
       const newName = `${moneybox.name}_${uniqueIdentifier}`
@@ -295,22 +303,10 @@ app.post('/api/moneybox', [
 
 app.post('/api/moneybox/:moneybox_id/balance/add', [
   param('moneybox_id').isInt({ min: 1 }),
-  body('deposit_data.amount').isInt({ min: 1 }), // Python backend uses int for amount
-  body('transaction_data.description').trim().escape(),
-  body('transaction_data.transaction_type').isIn(['direct', 'distribution']),
-  body('transaction_data.transaction_trigger').isIn([
-    'manually',
-    'automatically'
-  ]),
+  body('amount').isInt({ min: 1 }), // Python backend uses int for amount
+  body('description').trim().escape(),
   validateMoneyboxId,
-  rejectExtraFields([
-    'deposit_data',
-    'deposit_data.amount',
-    'transaction_data',
-    'transaction_data.description',
-    'transaction_data.transaction_type',
-    'transaction_data.transaction_trigger'
-  ]),
+  rejectExtraFields(['amount', 'description']),
   async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -318,7 +314,7 @@ app.post('/api/moneybox/:moneybox_id/balance/add', [
     }
 
     const { moneybox_id } = req.params
-    const { deposit_data, transaction_data } = req.body
+    const { amount, description } = req.body
 
     try {
       const moneybox = await Moneybox.findOne({
@@ -332,14 +328,14 @@ app.post('/api/moneybox/:moneybox_id/balance/add', [
         })
       }
 
-      moneybox.balance += deposit_data.amount
+      moneybox.balance += amount
       await moneybox.save()
 
       const transaction = new Transaction({
-        description: transaction_data.description,
-        transaction_type: transaction_data.transaction_type,
-        transaction_trigger: transaction_data.transaction_trigger,
-        amount: deposit_data.amount,
+        description: description,
+        transaction_type: 'direct', // only option for now
+        transaction_trigger: 'manually', // only option for now
+        amount: amount,
         balance: moneybox.balance,
         moneybox_id: moneybox.id,
         is_active: true
@@ -363,22 +359,10 @@ app.post('/api/moneybox/:moneybox_id/balance/add', [
 
 app.post('/api/moneybox/:moneybox_id/balance/sub', [
   param('moneybox_id').isInt({ min: 1 }),
-  body('withdraw_data.amount').isInt({ min: 1 }), // Python backend uses int for amount
-  body('transaction_data.description').trim().escape(),
-  body('transaction_data.transaction_type').isIn(['direct', 'distribution']),
-  body('transaction_data.transaction_trigger').isIn([
-    'manually',
-    'automatically'
-  ]),
+  body('amount').isInt({ min: 1 }), // Python backend uses int for amount
+  body('description').trim().escape(),
   validateMoneyboxId,
-  rejectExtraFields([
-    'withdraw_data',
-    'withdraw_data.amount',
-    'transaction_data',
-    'transaction_data.description',
-    'transaction_data.transaction_type',
-    'transaction_data.transaction_trigger'
-  ]),
+  rejectExtraFields(['amount', 'description']),
   async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -386,7 +370,7 @@ app.post('/api/moneybox/:moneybox_id/balance/sub', [
     }
 
     const { moneybox_id } = req.params
-    const { transaction_data, withdraw_data } = req.body
+    const { amount, description } = req.body
 
     try {
       const moneybox = await Moneybox.findOne({
@@ -400,24 +384,24 @@ app.post('/api/moneybox/:moneybox_id/balance/sub', [
         })
       }
 
-      if (moneybox.balance < withdraw_data.amount) {
+      if (moneybox.balance < amount) {
         return res.status(405).json({
-          message: `Can't sub amount '${withdraw_data.amount}' from Moneybox '${moneybox_id}'. Not enough balance to sub.`,
+          message: `Can't sub amount '${amount}' from Moneybox '${moneybox_id}'. Not enough balance to sub.`,
           details: {
-            details: withdraw_data.amount,
+            details: amount,
             id: moneybox_id
           }
         })
       }
 
-      moneybox.balance -= withdraw_data.amount
+      moneybox.balance -= amount
       await moneybox.save()
 
       const transaction = new Transaction({
-        description: transaction_data.description,
-        transaction_type: transaction_data.transaction_type,
-        transaction_trigger: transaction_data.transaction_trigger,
-        amount: -withdraw_data.amount,
+        description: description,
+        transaction_type: 'direct', // only option for now
+        transaction_trigger: 'manually', // only option for now
+        amount: -amount,
         balance: moneybox.balance,
         moneybox_id: moneybox.id,
         is_active: true
@@ -425,11 +409,11 @@ app.post('/api/moneybox/:moneybox_id/balance/sub', [
       await transaction.save()
 
       res.status(200).json({
+        id: moneybox.id,
+        name: moneybox.name,
         balance: moneybox.balance,
         created_at: moneybox.created_at.toISOString(),
         modified_at: moneybox.modified_at.toISOString(),
-        id: moneybox.id,
-        name: moneybox.name,
         priority: moneybox.priority,
         is_overflow: moneybox.is_overflow
       })
@@ -441,24 +425,11 @@ app.post('/api/moneybox/:moneybox_id/balance/sub', [
 
 app.post('/api/moneybox/:moneybox_id/balance/transfer', [
   param('moneybox_id').isInt({ min: 1 }),
-  body('transfer_data.amount').isInt({ min: 1 }), // Python backend uses int for amount
-  body('transfer_data.to_moneybox_id').isInt({ min: 1 }),
-  body('transaction_data.description').trim().escape(),
-  body('transaction_data.transaction_type').isIn(['direct', 'distribution']),
-  body('transaction_data.transaction_trigger').isIn([
-    'manually',
-    'automatically'
-  ]),
+  body('amount').isInt({ min: 1 }), // Python backend uses int for amount
+  body('to_moneybox_id').isInt({ min: 1 }),
+  body('description').trim().escape(),
   validateMoneyboxId,
-  rejectExtraFields([
-    'transfer_data',
-    'transfer_data.amount',
-    'transfer_data.to_moneybox_id',
-    'transaction_data',
-    'transaction_data.description',
-    'transaction_data.transaction_type',
-    'transaction_data.transaction_trigger'
-  ]),
+  rejectExtraFields(['amount', 'to_moneybox_id', 'description']),
   async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -466,7 +437,7 @@ app.post('/api/moneybox/:moneybox_id/balance/transfer', [
     }
 
     const { moneybox_id } = req.params
-    const { transfer_data, transaction_data } = req.body
+    const { amount, description, to_moneybox_id } = req.body
 
     const session = await mongoose.startSession()
     try {
@@ -477,7 +448,7 @@ app.post('/api/moneybox/:moneybox_id/balance/transfer', [
         is_active: true
       }).session(session)
       const targetMoneybox = await Moneybox.findOne({
-        id: transfer_data.to_moneybox_id,
+        id: to_moneybox_id,
         is_active: true
       }).session(session)
 
@@ -494,48 +465,50 @@ app.post('/api/moneybox/:moneybox_id/balance/transfer', [
         await session.abortTransaction()
         session.endSession()
         return res.status(404).json({
-          message: `Moneybox with id ${transfer_data.to_moneybox_id} does not exist.`,
-          details: { id: transfer_data.to_moneybox_id }
+          message: `Moneybox with id ${to_moneybox_id} does not exist.`,
+          details: { id: to_moneybox_id }
         })
       }
 
-      if (sourceMoneybox.balance < transfer_data.amount) {
+      if (sourceMoneybox.balance < amount) {
         await session.abortTransaction()
         session.endSession()
         return res.status(405).json({
-          message: `Can't sub amount '${transfer_data.amount}' from Moneybox '${moneybox_id}'. Not enough balance to sub.`,
+          message: `Can't sub amount '${amount}' from Moneybox '${moneybox_id}'. Not enough balance to sub.`,
           details: {
-            details: transfer_data.amount,
+            details: amount,
             id: moneybox_id
           }
         })
       }
 
-      sourceMoneybox.balance -= transfer_data.amount
-      targetMoneybox.balance += transfer_data.amount
+      sourceMoneybox.balance -= amount
+      targetMoneybox.balance += amount
       await sourceMoneybox.save({ session })
       await targetMoneybox.save({ session })
 
       await Transaction.create(
         [
           {
-            description: transaction_data.description,
-            transaction_type: transaction_data.transaction_type,
-            transaction_trigger: transaction_data.transaction_trigger,
-            amount: -transfer_data.amount,
+            description: description,
+            transaction_type: 'direct', // only option for now
+            transaction_trigger: 'manually', // only option for now
+            amount: -amount,
             balance: sourceMoneybox.balance,
             moneybox_id: sourceMoneybox.id,
             counterparty_moneybox_id: targetMoneybox.id,
+            counterparty_moneybox_name: targetMoneybox.name,
             is_active: true
           },
           {
-            description: transaction_data.description,
-            transaction_type: transaction_data.transaction_type,
-            transaction_trigger: transaction_data.transaction_trigger,
-            amount: transfer_data.amount,
+            description: description,
+            transaction_type: 'direct', // only option for now
+            transaction_trigger: 'manually', // only option for now
+            amount: amount,
             balance: targetMoneybox.balance,
             moneybox_id: targetMoneybox.id,
             counterparty_moneybox_id: sourceMoneybox.id,
+            counterparty_moneybox_name: sourceMoneybox.name,
             is_active: true
           }
         ],
@@ -584,13 +557,16 @@ app.get('/api/moneybox/:moneybox_id/transactions', [
       }
 
       const transaction_logs = transactions.map((transaction) => ({
+        id: transaction.id,
+        counterparty_moneybox_name: transaction.counterparty_moneybox_name,
         description: transaction.description,
         transaction_type: transaction.transaction_type,
         transaction_trigger: transaction.transaction_trigger,
         amount: transaction.amount,
         balance: transaction.balance,
         counterparty_moneybox_id: transaction.counterparty_moneybox_id,
-        moneybox_id: transaction.moneybox_id
+        moneybox_id: transaction.moneybox_id,
+        created_at: transaction.created_at.toISOString()
       }))
 
       res.status(200).json({

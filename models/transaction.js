@@ -1,4 +1,6 @@
 const mongoose = require('mongoose')
+const AutoIncrementFactory = require('mongoose-sequence')
+const AutoIncrement = AutoIncrementFactory(mongoose)
 
 const transactionSchema = new mongoose.Schema(
   {
@@ -53,6 +55,17 @@ const transactionSchema = new mongoose.Schema(
       required: [true, 'is_active is required'],
       default: true,
       comment: 'Flag to mark instance as deleted.'
+    },
+    // While original Python backend resolves this on-the-fly, we store it in the database,
+    // since we also add suffixes to deleted moneybox names.
+    counterparty_moneybox_name: {
+      type: String,
+      default: null,
+      minlength: [
+        1,
+        'Counterparty moneybox name must have at least 1 character'
+      ],
+      comment: 'The name of a counterparty moneybox.'
     }
   },
   // Unlike in original Python backend, modified_at is initialized with created_at value by default, not null.
@@ -61,6 +74,12 @@ const transactionSchema = new mongoose.Schema(
     timestamps: { createdAt: 'created_at', updatedAt: 'modified_at' }
   }
 )
+
+// To be compatible with original Python backend we use sequential integer ids instead of default MongoDB ObjectIds (_id).
+transactionSchema.plugin(AutoIncrement, {
+  id: 'transaction_id_counter',
+  inc_field: 'id'
+})
 
 const Transaction = mongoose.model('Transaction', transactionSchema)
 
