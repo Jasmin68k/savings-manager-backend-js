@@ -66,6 +66,12 @@ const transactionSchema = new mongoose.Schema(
         'Counterparty moneybox name must have at least 1 character'
       ],
       comment: 'The name of a counterparty moneybox.'
+    },
+    counterparty_moneybox_is_overflow: {
+      type: Boolean,
+      required: [true, 'counterparty_is_overflow is required'],
+      default: false,
+      comment: 'Flag to mark counterparty as overflow.'
     }
   },
   // Unlike in original Python backend, modified_at is initialized with created_at value by default, not null.

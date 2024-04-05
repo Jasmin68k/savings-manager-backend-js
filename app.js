@@ -487,6 +487,9 @@ app.post('/api/moneybox/:moneybox_id/balance/transfer', [
       await sourceMoneybox.save({ session })
       await targetMoneybox.save({ session })
 
+      const sourceMoneyboxIsOverflow = sourceMoneybox.is_overflow
+      const targetMoneyboxIsOverflow = targetMoneybox.is_overflow
+
       await Transaction.create(
         [
           {
@@ -498,6 +501,7 @@ app.post('/api/moneybox/:moneybox_id/balance/transfer', [
             moneybox_id: sourceMoneybox.id,
             counterparty_moneybox_id: targetMoneybox.id,
             counterparty_moneybox_name: targetMoneybox.name,
+            counterparty_moneybox_is_overflow: targetMoneyboxIsOverflow,
             is_active: true
           },
           {
@@ -509,6 +513,7 @@ app.post('/api/moneybox/:moneybox_id/balance/transfer', [
             moneybox_id: targetMoneybox.id,
             counterparty_moneybox_id: sourceMoneybox.id,
             counterparty_moneybox_name: sourceMoneybox.name,
+            counterparty_moneybox_is_overflow: sourceMoneyboxIsOverflow,
             is_active: true
           }
         ],
@@ -566,7 +571,9 @@ app.get('/api/moneybox/:moneybox_id/transactions', [
         balance: transaction.balance,
         counterparty_moneybox_id: transaction.counterparty_moneybox_id,
         moneybox_id: transaction.moneybox_id,
-        created_at: transaction.created_at.toISOString()
+        created_at: transaction.created_at.toISOString(),
+        counterparty_moneybox_is_overflow:
+          transaction.counterparty_moneybox_is_overflow
       }))
 
       res.status(200).json({
