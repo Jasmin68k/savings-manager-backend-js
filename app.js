@@ -8,15 +8,21 @@ const { body, param, validationResult } = require('express-validator')
 
 const app = express()
 const PORT = process.env.PORT || 3000
+const corsOrigin = process.env.CORS_ORIGIN
 
-app.use(cors())
+if (corsOrigin) {
+  app.use(cors({ origin: corsOrigin }))
+} else {
+  app.use(cors())
+}
+
 app.use(bodyParser.json())
 
 const mongoose = require('mongoose')
-mongoose.set('strictQuery', false)
-const mongoDB = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_CLUSTER}?retryWrites=true&w=majority&appName=${process.env.DB_APPNAME}`
+const mongoDB = `mongodb://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}?directConnection=true&serverSelectionTimeoutMS=2000&appName=${process.env.DB_APPNAME}`
 
 main().catch((err) => console.error(err))
+
 async function main() {
   await mongoose.connect(mongoDB)
 }

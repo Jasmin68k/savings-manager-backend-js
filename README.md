@@ -8,9 +8,9 @@ Backend also forked here:
 
 https://github.com/Jasmin68k/savings-manager-backend
 
-Check it out here (auto-deployed `feature/temp-express-only` branch):
+Check it out here (currently `feature/temp-express-only` branch):
 
-https://savings-manager-frontend.netlify.app/ (using this frontend: https://github.com/Jasmin68k/savings-manager-frontend)
+https://savings-manager.siliconmoon.com/ (using this frontend: https://github.com/Jasmin68k/savings-manager-frontend)
 
 ## Configuration
 
@@ -20,9 +20,12 @@ Create `.env.local` in root directory with the following entries:
 
 - `DB_USER=[USERNAME]`
 - `DB_PASSWORD=[PASSWORD]`
-- `DB_CLUSTER=[CLUSTER]`
+- `DB_NAME=[NAME]`
 - `DB_APPNAME=[APPNAME]`
+- `DB_HOST=[HOST]`
+- `DB_PORT=[PORT]`
 - `PORT=[SERVERPORT]`
+- `CORS_ORIGIN=[CORS_ORIGIN]`
 
 ## Project setup
 
