@@ -14,7 +14,7 @@ https://savings-manager.siliconmoon.com/ (using this frontend: https://github.co
 
 ## Configuration
 
-Setup MongoDB.
+Setup MongoDB with single-node replica set.
 
 Create `.env.local` in root directory with the following entries:
 
@@ -24,6 +24,7 @@ Create `.env.local` in root directory with the following entries:
 - `DB_APPNAME=[APPNAME]`
 - `DB_HOST=[HOST]`
 - `DB_PORT=[PORT]`
+- `DB_RSNAME=[RSNAME]`
 - `PORT=[SERVERPORT]`
 - `CORS_ORIGIN=[CORS_ORIGIN]`
 

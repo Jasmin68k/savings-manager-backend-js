@@ -19,7 +19,7 @@ if (corsOrigin) {
 app.use(bodyParser.json())
 
 const mongoose = require('mongoose')
-const mongoDB = `mongodb://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}?directConnection=true&serverSelectionTimeoutMS=2000&appName=${process.env.DB_APPNAME}`
+const mongoDB = `mongodb://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}?directConnection=true&serverSelectionTimeoutMS=2000&appName=${process.env.DB_APPNAME}&replicaSet=${process.env.DB_RSNAME}`
 
 main().catch((err) => console.error(err))
 
