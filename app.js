@@ -4,6 +4,8 @@ const cors = require('cors')
 const bodyParser = require('body-parser')
 const Moneybox = require('./models/moneybox.js')
 const Transaction = require('./models/transaction.js')
+const Settings = require('./models/settings.js')
+
 const { body, param, validationResult } = require('express-validator')
 
 const app = express()
@@ -660,6 +662,119 @@ app.get('/api/moneyboxes', async (req, res) => {
     handleError(error, res)
   }
 })
+
+app.get('/api/settings', async (req, res) => {
+  try {
+    const settings = await Settings.findById('globalSettings')
+
+    if (!settings) {
+      return res.status(204).json({
+        message: 'Settings not defined yet.'
+      })
+    }
+
+    res.status(200).json({
+      savings_amount: settings.savings_amount,
+      savings_cycle: settings.savings_cycle
+    })
+  } catch (error) {
+    handleError(error, res)
+  }
+})
+
+app.post('/api/settings', [
+  body('savings_amount')
+    .isInt({ min: 0 })
+    .withMessage('Savings amount must be a positive integer'),
+  body('savings_cycle')
+    .isIn(['daily', 'weekly', 'monthly', 'yearly'])
+    .withMessage(
+      'Savings cycle must be one of: daily, weekly, monthly, yearly'
+    ),
+  rejectExtraFields(['savings_amount', 'savings_cycle']),
+  async (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() })
+    }
+
+    const settings = await Settings.findById('globalSettings')
+
+    if (settings) {
+      return res.status(409).json({
+        message: 'Settings already exist.'
+      })
+    }
+
+    const { savings_amount, savings_cycle } = req.body
+
+    const newSettings = new Settings({
+      _id: 'globalSettings',
+      savings_amount,
+      savings_cycle
+    })
+
+    try {
+      await newSettings.save()
+
+      res.status(200).json({
+        savings_amount: newSettings.savings_amount,
+        savings_cycle: newSettings.savings_cycle
+      })
+    } catch (error) {
+      handleError(error, res)
+    }
+  }
+])
+
+app.patch('/api/settings', [
+  body('savings_amount')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Savings amount must be a positive integer'),
+  body('savings_cycle')
+    .optional()
+    .isIn(['daily', 'weekly', 'monthly', 'yearly'])
+    .withMessage(
+      'Savings cycle must be one of: daily, weekly, monthly, yearly'
+    ),
+  rejectExtraFields(['savings_amount', 'savings_cycle']),
+  async (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() })
+    }
+
+    const settings = await Settings.findById('globalSettings')
+
+    if (!settings) {
+      return res.status(404).json({
+        message: 'Settings not found.'
+      })
+    }
+
+    const updateData = {}
+    if (req.body.savings_amount !== undefined)
+      updateData.savings_amount = req.body.savings_amount
+    if (req.body.savings_cycle !== undefined)
+      updateData.savings_cycle = req.body.savings_cycle
+
+    try {
+      const settings = await Settings.findByIdAndUpdate(
+        'globalSettings',
+        updateData,
+        { new: true }
+      )
+
+      res.status(200).json({
+        savings_amount: settings.savings_amount,
+        savings_cycle: settings.savings_cycle
+      })
+    } catch (error) {
+      handleError(error, res)
+    }
+  }
+])
 
 app.use((req, res) => {
   res.status(404).json({ detail: 'Not Found' })
