@@ -675,7 +675,8 @@ app.get('/api/settings', async (req, res) => {
 
     res.status(200).json({
       savings_amount: settings.savings_amount,
-      savings_cycle: settings.savings_cycle
+      savings_cycle: settings.savings_cycle,
+      savings_mode: settings.savings_mode
     })
   } catch (error) {
     handleError(error, res)
@@ -691,7 +692,12 @@ app.post('/api/settings', [
     .withMessage(
       'Savings cycle must be one of: daily, weekly, monthly, yearly'
     ),
-  rejectExtraFields(['savings_amount', 'savings_cycle']),
+  body('savings_mode')
+    .isIn(['add-up', 'fill-envelopes', 'collect'])
+    .withMessage(
+      'Savings mode must be one of: add-up, fill-envelopes, collect'
+    ),
+  rejectExtraFields(['savings_amount', 'savings_cycle', 'savings_mode']),
   async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -706,12 +712,13 @@ app.post('/api/settings', [
       })
     }
 
-    const { savings_amount, savings_cycle } = req.body
+    const { savings_amount, savings_cycle, savings_mode } = req.body
 
     const newSettings = new Settings({
       _id: 'globalSettings',
       savings_amount,
-      savings_cycle
+      savings_cycle,
+      savings_mode
     })
 
     try {
@@ -719,7 +726,8 @@ app.post('/api/settings', [
 
       res.status(200).json({
         savings_amount: newSettings.savings_amount,
-        savings_cycle: newSettings.savings_cycle
+        savings_cycle: newSettings.savings_cycle,
+        savings_mode: newSettings.savings_mode
       })
     } catch (error) {
       handleError(error, res)
@@ -738,9 +746,16 @@ app.patch('/api/settings', [
     .withMessage(
       'Savings cycle must be one of: daily, weekly, monthly, yearly'
     ),
-  rejectExtraFields(['savings_amount', 'savings_cycle']),
+  body('savings_mode')
+    .optional()
+    .isIn(['add-up', 'fill-envelopes', 'collect'])
+    .withMessage(
+      'Savings mode must be one of: add-up, fill-envelopes, collect'
+    ),
+  rejectExtraFields(['savings_amount', 'savings_cycle', 'savings_mode']),
   async (req, res) => {
     const errors = validationResult(req)
+
     if (!errors.isEmpty()) {
       return res.status(422).json({ errors: errors.array() })
     }
@@ -758,6 +773,8 @@ app.patch('/api/settings', [
       updateData.savings_amount = req.body.savings_amount
     if (req.body.savings_cycle !== undefined)
       updateData.savings_cycle = req.body.savings_cycle
+    if (req.body.savings_mode !== undefined)
+      updateData.savings_mode = req.body.savings_mode
 
     try {
       const settings = await Settings.findByIdAndUpdate(
@@ -768,7 +785,8 @@ app.patch('/api/settings', [
 
       res.status(200).json({
         savings_amount: settings.savings_amount,
-        savings_cycle: settings.savings_cycle
+        savings_cycle: settings.savings_cycle,
+        savings_mode: settings.savings_mode
       })
     } catch (error) {
       handleError(error, res)

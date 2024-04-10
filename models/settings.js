@@ -17,6 +17,12 @@ const settingsSchema = new mongoose.Schema(
       required: true,
       enum: ['daily', 'weekly', 'monthly', 'yearly'],
       comment: 'The current savings cycle of the moneybox.'
+    },
+    savings_mode: {
+      type: String,
+      required: true,
+      enum: ['add-up', 'fill-envelopes', 'collect'],
+      comment: 'The current savings mode of the moneybox.'
     }
   },
   // timestamps not used atm, but could be useful for future features
