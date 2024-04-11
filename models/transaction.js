@@ -7,6 +7,7 @@ const transactionSchema = new mongoose.Schema(
     description: {
       type: String,
       required: false,
+      default: '',
       comment: 'The description of the transaction action.'
     },
     transaction_type: {
