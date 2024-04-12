@@ -6,6 +6,56 @@ const Moneybox = require('./models/moneybox.js')
 const Transaction = require('./models/transaction.js')
 const Settings = require('./models/settings.js')
 
+const fs = require('fs')
+const path = require('path')
+const cron = require('node-cron')
+let scheduledTask = null
+
+function scheduleTask(cycle, scriptName) {
+  const scriptPath = path.join(__dirname, './utils', scriptName)
+
+  if (scheduledTask) {
+    scheduledTask.stop()
+    console.log('Stopped previously scheduled task')
+  }
+
+  if (!fs.existsSync(scriptPath)) {
+    console.error(`Script file does not exist: ${scriptPath}`)
+    throw new Error(`Script file does not exist: ${scriptPath}`)
+  }
+
+  let cronString = ''
+  switch (cycle) {
+    case 'daily':
+      cronString = '0 0 * * *' // Every day at midnight
+      break
+    case 'weekly':
+      cronString = '0 0 * * 1' // Every Monday at midnight
+      break
+    case 'monthly':
+      cronString = '0 0 1 * *' // First day of every month at midnight
+      break
+    case 'yearly':
+      cronString = '0 0 1 1 *' // Every January 1st at midnight
+      break
+    default:
+      throw new Error('Invalid savings cycle')
+  }
+
+  scheduledTask = cron.schedule(
+    cronString,
+    () => {
+      const script = require(scriptPath)
+      script.run()
+    },
+    {
+      scheduled: true
+    }
+  )
+
+  console.log(`Scheduled task for: ${scriptPath} with cycle: ${cycle}`)
+}
+
 const { body, param, validationResult } = require('express-validator')
 
 const app = express()
@@ -27,6 +77,15 @@ main().catch((err) => console.error(err))
 
 async function main() {
   await mongoose.connect(mongoDB)
+
+  const settings = await Settings.findById('globalSettings')
+  if (settings) {
+    try {
+      scheduleTask(settings.savings_cycle, `${settings.savings_mode}.js`)
+    } catch (error) {
+      console.error('Failed to schedule task on startup:', error.message)
+    }
+  }
 }
 
 const handleError = (error, res) => {
@@ -723,14 +782,22 @@ app.post('/api/settings', [
 
     try {
       await newSettings.save()
-
-      res.status(200).json({
-        savings_amount: newSettings.savings_amount,
-        savings_cycle: newSettings.savings_cycle,
-        savings_mode: newSettings.savings_mode
-      })
-    } catch (error) {
-      handleError(error, res)
+      try {
+        scheduleTask(
+          newSettings.savings_cycle,
+          `${newSettings.savings_mode}.js`
+        )
+        res.status(200).json({
+          savings_amount: newSettings.savings_amount,
+          savings_cycle: newSettings.savings_cycle,
+          savings_mode: newSettings.savings_mode
+        })
+      } catch (scheduleError) {
+        console.error('Scheduling error:', scheduleError.message)
+        res.status(500).json({ message: 'Failed to schedule task.' })
+      }
+    } catch (dbError) {
+      handleError(dbError, res)
     }
   }
 ])
@@ -782,14 +849,19 @@ app.patch('/api/settings', [
         updateData,
         { new: true }
       )
-
-      res.status(200).json({
-        savings_amount: settings.savings_amount,
-        savings_cycle: settings.savings_cycle,
-        savings_mode: settings.savings_mode
-      })
-    } catch (error) {
-      handleError(error, res)
+      try {
+        scheduleTask(settings.savings_cycle, `${settings.savings_mode}.js`)
+        res.status(200).json({
+          savings_amount: settings.savings_amount,
+          savings_cycle: settings.savings_cycle,
+          savings_mode: settings.savings_mode
+        })
+      } catch (scheduleError) {
+        console.error('Scheduling error:', scheduleError.message)
+        res.status(500).json({ message: 'Failed to schedule task.' })
+      }
+    } catch (dbError) {
+      handleError(dbError, res)
     }
   }
 ])
