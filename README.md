@@ -1,4 +1,12 @@
-# Savings Manager Backend
+# Savings Manager
+
+Savings Manager is a straightforward app for organizing savings. With its intuitive interface, you can create virtual envelopes for different savings objectives, deposit and withdraw funds easily, and transfer money between envelopes seamlessly. Set up automated savings distribution cycles to streamline your progress towards financial goals.
+
+## Important Branch Information
+
+**Latest Features**: For the most up-to-date features and developments, please check out branch `feature/temp-express-only`. The `master` branch is maintained for compatibility with the original Python backend only (see below).
+
+# Backend
 
 NodeJS/Express implementation (work in progress) of this backend:
 
