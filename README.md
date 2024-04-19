@@ -2,23 +2,9 @@
 
 Savings Manager is a straightforward app for organizing savings. With its intuitive interface, you can create virtual envelopes for different savings objectives, deposit and withdraw funds easily, and transfer money between envelopes seamlessly. Set up automated savings distribution cycles to streamline your progress towards financial goals.
 
-## Important Branch Information
+Check it out at the link below using its frontend available at https://github.com/Jasmin68k/savings-manager-frontend:
 
-**Latest Features**: For the most up-to-date features and developments, please check out branch `feature/temp-express-only`. The `master` branch is maintained for compatibility with the original Python backend only (see below).
-
-# Backend
-
-NodeJS/Express implementation (work in progress) of this backend:
-
-https://github.com/PythBuster/savings_manager
-
-Backend also forked here:
-
-https://github.com/Jasmin68k/savings-manager-backend
-
-Check it out here (currently `feature/temp-express-only` branch):
-
-https://savings-manager.siliconmoon.com/ (using this frontend: https://github.com/Jasmin68k/savings-manager-frontend)
+https://savings-manager.siliconmoon.com/
 
 ## Configuration
 
@@ -47,3 +33,11 @@ npm install
 ```
 npm run start
 ```
+
+## History
+
+The project began with the creation of a frontend (see above) designed to complement the Python backend, inspired by its UI mockups, available at https://github.com/PythBuster/savings_manager. This backend has also been preserved at https://github.com/Jasmin68k/savings-manager-backend.
+
+To fully implement all features initially envisioned by the original backend's author, the backend was first reimplemented, then extended upon using NodeJS/Express. This included the completion of all proposed features. The frontend was developed concurrently to ensure seamless integration with the new NodeJS/Express backend, thus meeting the initial project specifications.
+
+A version of this backend which is not feature-complete yet remains fully API-compatible with the original Python backend is available in the `compatibility/python-backend` branch. The feature-complete version of the project is available in the `master` branch.
