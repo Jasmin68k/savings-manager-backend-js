@@ -11,6 +11,7 @@
     "express": "~4.19.2",
     "express-validator": "^7.0.1",
     "mongoose": "^8.2.3",
-    "mongoose-sequence": "^6.0.1"
+    "mongoose-sequence": "^6.0.1",
+    "node-cron": "^3.0.3"
   }
 }
