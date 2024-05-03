@@ -58,8 +58,15 @@ const moneyboxSchema = new mongoose.Schema(
   }
 )
 
-// As in original Python backend, allow using existing name, when is_active is false
-moneyboxSchema.index({ name: 1, is_active: 1 }, { unique: true })
+// As in original Python backend, allow using existing name, when is_active is false and
+// treat name as case insensitive.
+// Use 'en_US' locale, which at strength 2 (taking diacratics into account) works for
+// German etc., too, since we're not storing/defining any specific locale/language
+// in the database
+moneyboxSchema.index(
+  { name: 1, is_active: 1 },
+  { unique: true, collation: { locale: 'en_US', strength: 2 } }
+)
 
 // Allow only one overflow
 moneyboxSchema.index(
