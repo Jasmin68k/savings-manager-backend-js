@@ -2,9 +2,7 @@
 
 Savings Manager is a straightforward app for organizing savings. With its intuitive interface, you can create virtual envelopes for different savings objectives, deposit and withdraw funds easily, and transfer money between envelopes seamlessly. Set up automated savings distribution cycles to streamline your progress towards financial goals.
 
-Check it out at the link below using its frontend available at https://github.com/Jasmin68k/savings-manager-frontend:
-
-https://savings-manager.siliconmoon.com/
+Frontend available at https://github.com/Jasmin68k/savings-manager-frontend.
 
 ## Configuration
 
